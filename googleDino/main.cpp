@@ -3,16 +3,16 @@
 #include <time.h>
 #include <conio.h> //_hbhit()
 #define DINO_BOTTOM_Y 12
-#define TREE_BOTTOM_X 20
-#define TREE_BOTTOM_Y 45
+#define TREE_BOTTOM_X 45
+#define TREE_BOTTOM_Y 20
 
-//ì½˜ì†” ì°½ í¬ê¸° ì œëª© ì§€ì •
+//ÄÜ¼Ö Ã¢ Å©±â Á¦¸ñ ÁöÁ¤
 void SetConsoleView(){
     system("mode con:cols=100 lines=25");
     system("title Google Dino");
 }
 
-//ì»¤ì„œ ìœ„ì¹˜ x,yë¡œ ì´ë™
+//Ä¿¼­ À§Ä¡ x,y·Î ÀÌµ¿
 void GotoXY(int x, int y){
     COORD Pos;
     Pos.X = 2*x;
@@ -20,7 +20,7 @@ void GotoXY(int x, int y){
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
 }
 
-//í‚¤ë³´ë“œ ì…ë ¥
+//Å°º¸µå ÀÔ·Â
 int GetKeyDown(){
     if(_kbhit() !=0){
         return _getch();
@@ -28,7 +28,7 @@ int GetKeyDown(){
     return 0;
 }
 
-//ê³µë£¡ ê·¸ë¦¬ê¸°
+//°ø·æ ±×¸®±â
 void DrawDino(int dinoY){
     GotoXY(0,dinoY);
     static bool legFlag = true;
@@ -58,7 +58,7 @@ void DrawDino(int dinoY){
     }
 }
 
-//ë‚˜ë¬´
+//³ª¹«
 void DrawTree(int treeX)
 {
     GotoXY(treeX, TREE_BOTTOM_Y);
@@ -73,7 +73,7 @@ void DrawTree(int treeX)
     printf(" $$ ");
 }
 
-// ì¶©ëŒ ì‹œ ê²Œì„ì˜¤ë²„
+// Ãæµ¹ ½Ã °ÔÀÓ¿À¹ö
 void DrawGameOver(const int score){
     system("cls");
     int x = 18;
@@ -86,12 +86,12 @@ void DrawGameOver(const int score){
     printf("===========================");
     GotoXY(x, y + 5);
     printf("SCORE : %d", score);
- 
+
     printf("\n\n\n\n\n\n\n\n\n");
     system("pause");
 }
 
-bool inCollision(const int treeX, const int dinoY){
+bool isCollision(const int treeX, const int dinoY){
     GotoXY(0,0);
     printf("treeX : %d, dinoY : %d", treeX, dinoY);
     if(treeX <= 8 && treeX >=4 && dinoY >8){
@@ -102,4 +102,70 @@ bool inCollision(const int treeX, const int dinoY){
 
 int main(){
     SetConsoleView();
-}
+
+    while(true){
+        // °ÔÀÓ½ÃÀÛ½Ã ÃÊ±âÈ­
+        bool isJunmping = false;
+        bool isBottom = true;
+        const int gravity = 3;
+
+        int dinoY = DINO_BOTTOM_Y;
+        int treeX = TREE_BOTTOM_X;
+
+        int score = 0;
+        clock_t start, curr; //Á¡¼ö º¯¼ö ÃÊ±âÈ­
+        start = clock();    //½Ã°¢½Ã°£ ÃÊ±âÈ­
+
+        while (true) //ÇÑ ÆÇ¿¡ ´ëÇÑ ·çÇÁ
+        {   
+            // Ãæµ¹Ã¼Å© Æ®¸® x°ª, °ø·æ y°ªÀ¸·Î ÆÇ´Ü
+            if(isCollision(treeX, dinoY))
+                break;
+            if(GetKeyDown() == 'z' & isBottom){
+                isJunmping = true;
+                isBottom = false;
+            }
+
+            if(isJunmping){
+                // Á¡ÇÁÁßÀÌ¶ó¸é y °¨¼Ò, Á¡ÇÁ ³¡³ª¸é yÁõ°¡
+                dinoY -= gravity;
+            }else{
+                dinoY += gravity;
+            }
+
+            //y°¡ °è¼Ó Áõ°¡ÇÏ´Â °ÍÀ» ¸·±âÀ§ÇØ ¹Ù´Ú ÁöÁ¤
+            if(dinoY >= DINO_BOTTOM_Y){
+                dinoY = DINO_BOTTOM_Y;
+                isBottom = true;
+            }
+
+            //³ª¹«°¡ ¿ŞÂÊÀ¸·Î °¡µµ·Ï, ³ª¹«ÀÇ À§Ä¡°¡ ¿ŞÂÊ ³¡À¸·Î °¡¸é ´Ù½Ã ¿À¸¥ÂÊ ³¡À¸·Î ¼ÒÈ¯
+            treeX -= 2;
+            if(treeX<=0){
+                treeX = TREE_BOTTOM_X;
+            }
+
+            //Á¡ÇÁÀÇ ¸ÇÀ§¸¦ ÂïÀ¸¸é Á¡ÇÁ ³¡
+            if (dinoY <=3){
+                isJunmping = false;
+            }
+
+            DrawDino(dinoY);
+            DrawTree(treeX);
+
+            curr = clock();
+            if((curr-start)/(CLOCKS_PER_SEC)>=1) //1ÃÊ°¡ ³Ñ¾úÀ» ¶§
+            {
+                score++;
+                start = clock();
+            }
+            Sleep(60);
+            system("cls");
+
+            GotoXY(22, 0);
+            printf("Score : %d ", score);
+        }
+        DrawGameOver(score);
+    }
+    return 0;
+} 
